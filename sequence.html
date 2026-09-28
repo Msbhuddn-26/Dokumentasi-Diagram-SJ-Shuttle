@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sequence Diagram - SJ Shuttle</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 0; }
+        .nav-menu { background: #343a40; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .nav-menu a { color: #fff; text-decoration: none; padding: 10px 15px; margin: 5px; border-radius: 5px; font-weight: bold; transition: background 0.3s; display: inline-block; }
+        .nav-menu a.btn-dashboard { background: #6c757d; }
+        .nav-menu a.btn-usecase { background: #fd7e14; }
+        .nav-menu a.btn-activity { background: #17a2b8; }
+        .nav-menu a.btn-sequence { background: #28a745; }
+        .nav-menu a.btn-flowchart { background: #6f42c1; }
+        .nav-menu a:hover { opacity: 0.8; }
+        .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        .slide { background: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 30px; margin-bottom: 30px; border-left: 5px solid #28a745; }
+        .slide h2 { color: #28a745; margin-top: 0; border-bottom: 2px solid #e9ecef; padding-bottom: 10px; }
+        .slide img { max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 15px; }
+        .slide p { font-size: 16px; text-align: justify; line-height: 1.6; }
+        .badge { display: inline-block; background: #28a745; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; margin-bottom: 10px; }
+        .footer { background: #343a40; color: #adb5bd; text-align: center; padding: 20px; margin-top: 40px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="nav-menu">
+        <a href="index.html" class="btn-dashboard">Dashboard</a>
+        <a href="use_case.html" class="btn-usecase">1. Presentasi Use Case</a>
+        <a href="activity.html" class="btn-activity">2. Presentasi Activity</a>
+        <a href="sequence.html" class="btn-sequence">3. Presentasi Sequence</a>
+        <a href="flowchart.html" class="btn-flowchart">4. Presentasi Flowchart</a>
+    </div>
+
+    <div class="container">
+        <div class="slide">
+            <span class="badge">Sequence 01</span>
+            <h2>Autentikasi Pengguna & SIAKAD</h2>
+            <img src="sequence/1_login & autentifikasi.png" alt="Sequence Login">
+            <p>Proses autentikasi dimulai ketika Aktor menginputkan username dan password pada antarmuka LoginForm, yang kemudian meneruskan request authenticate ke Control Class AuthController. AuthController mencari data pengguna melalui Entity User dan memanggil SIAKAD API eksternal untuk memvalidasi status akademik. Dalam blok kondisi (alt), jika kredensial dan status valid, sistem akan men-generate Sanctum Token dari Entity User dan mengarahkan pengguna ke Dashboard utama. Sebaliknya, jika gagal, sistem akan mengembalikan pesan error autentikasi ke layar pengguna.</p>
+        </div>
+
+        <div class="slide">
+            <span class="badge">Sequence 02</span>
+            <h2>Transaksi Top-Up Midtrans</h2>
+            <img src="sequence/2_top-up e-wallet.png" alt="Sequence Top Up">
+            <p>Penumpang memulai pengisian saldo melalui WalletView. WalletService menangani request ini dengan mengecek/membuat data di Entity Wallet, lalu meminta pembuatan transaksi ke MidtransAPI untuk mendapatkan URL Snap. Setelah mencatat transaksi pending di Entity WalletTransaction, URL Snap dirender ke layar penumpang. Saat proses pembayaran selesai, MidtransAPI mengirimkan payload webhook ke WalletService. Di dalam blok kondisi, jika status pembayaran adalah Settlement, sistem meng-update status transaksi menjadi SUCCESS dan melakukan increment saldo di Entity Wallet, lalu mengembalikan respons HTTP 200 OK.</p>
+        </div>
+
+        <div class="slide">
+            <span class="badge">Sequence 03</span>
+            <h2>Request Generate Tiket QR</h2>
+            <img src="sequence/3_generate QR token.png" alt="Sequence Generate QR">
+            <p>Penumpang meminta pembuatan tiket dengan menekan tombol pada TicketingView. PaymentBoardingService memanggil Entity Wallet untuk mengecek saldo berjalan. Terdapat blok pengecekan kondisi ganda (alt): jika penumpang adalah mahasiswa reguler dan saldonya kurang dari Rp 7.500, sistem melempar exception dan menampilkan pesan error. Namun, jika saldo cukup atau berstatus Langganan, sistem membuat token UUID dengan durasi aktif (TTL) 5 menit pada Entity BoardingTransaction, lalu mengembalikan token beserta warna bingkai untuk dirender pada layar penumpang.</p>
+        </div>
+
+        <div class="slide">
+            <span class="badge">Sequence 04</span>
+            <h2>Validasi Jarak & Potong Saldo</h2>
+            <img src="sequence/4_pindai tiket.png" alt="Sequence Boarding">
+            <p>Pengemudi memindai QR Token melalui ScannerView. Request dikirim ke PaymentBoardingService yang pertama-tama mengecek kapasitas di Entity Fleet. Jika kapasitas penuh, sistem menolak. Jika kursi tersedia, sistem menghitung jarak Haversine. Dalam sub-kondisi, jika jarak lebih dari 15 meter, sistem melempar error Fake GPS. Jika kurang dari 15 meter (Valid), sistem memvalidasi token di Entity BoardingTransaction, mengeksekusi Lock-For-Update dan pemotongan saldo di Entity Wallet, mengubah status tiket menjadi SUCCESS, mengurangi kuota kursi, dan mengembalikan respons sukses.</p>
+        </div>
+
+        <div class="slide">
+            <span class="badge">Sequence 05</span>
+            <h2>Pencatatan Tiket Darurat (Fallback)</h2>
+            <img src="sequence/5_protokol fallback.png" alt="Sequence Fallback">
+            <p>Saat terjadi kendala, pengemudi memilih mode darurat pada EmergencyScannerView dan menginputkan NIM. BoardingController menerima data ini dan memanggil fungsi findByNIM pada Entity User. Pada blok alternatif, jika pengguna tidak dikenali, controller melempar pesan error dan menolak akses. Jika pengguna terdaftar, sistem langsung mencatat pemotongan tertunda (pending deduction) pada Entity BoardingTransaction dan mengembalikan pesan sukses agar konfirmasi evakuasi penumpang tercatat.</p>
+        </div>
+
+        <div class="slide">
+            <span class="badge">Sequence 06</span>
+            <h2>Transmisi Sinyal Alarm SOS</h2>
+            <img src="sequence/6_kirim alert SOS.png" alt="Sequence SOS">
+            <p>Pengemudi menginisiasi peringatan dengan menggeser slider SOS, yang memicu fungsi triggerSos pada DriverController. Controller seketika memperbarui status pada Entity Fleet menjadi OFFLINE_EMERGENCY dan membekukan seluruh transaksi tiket pada armada terkait. Kemudian, event broadcast dikirimkan ke Boundary AdminDashboardView yang langsung memicu alarm audio dan indikator merah berkedip untuk Administrator. Proses berujung pada pengembalian konfirmasi ke perangkat pengemudi.</p>
+        </div>
+
+        <div class="slide">
+            <span class="badge">Sequence 07</span>
+            <h2>Eksekusi Wake-Sleep Cron Job</h2>
+            <img src="sequence/7_hibernasi mode.png" alt="Sequence Hibernasi">
+            <p>Aktor Auto-Scheduler (Cron Job) menembakkan trigger waktu tepat pada pukul 10:00:00 ke SchedulerController. Controller merespons dengan memanggil WebSocketReverb eksternal untuk memutus semua koneksi pengemudi, mengubah status sistem menjadi HIBERNATION_MODE, dan mengirim balasan. Setelah jeda waktu istirahat (10:00 - 15:30), Auto-Scheduler kembali mengirimkan trigger. SchedulerController mengeksekusi perintah pembukaan kembali port WebSocketReverb, menetapkan status sistem menjadi ACTIVE_SHIFT, dan memberikan konfirmasi bangun ke sistem penjadwalan.</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        &copy; 2026 SJ Shuttle (TelePort UNPAM) - Misbachuddin. All Rights Reserved.
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Diagram - SJ Shuttle</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 0; }
+        .nav-menu { background: #343a40; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .nav-menu a { color: #fff; text-decoration: none; padding: 10px 15px; margin: 5px; border-radius: 5px; font-weight: bold; transition: background 0.3s; display: inline-block; }
+        .nav-menu a.btn-dashboard { background: #6c757d; }
+        .nav-menu a.btn-usecase { background: #fd7e14; }
+        .nav-menu a.btn-activity { background: #17a2b8; }
+        .nav-menu a.btn-sequence { background: #28a745; }
+        .nav-menu a.btn-flowchart { background: #6f42c1; }
+        .nav-menu a:hover { opacity: 0.8; }
+        .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        .slide { background: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 30px; margin-bottom: 30px; border-left: 5px solid #17a2b8; }
+        .slide h2 { color: #17a2b8; margin-top: 0; border-bottom: 2px solid #e9ecef; padding-bottom: 10px; }
+        .slide img { max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 15px; }
+        .slide p { font-size: 16px; text-align: justify; line-height: 1.6; }
+        .badge { display: inline-block; background: #17a2b8; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; margin-bottom: 10px; }
+        .footer { background: #343a40; color: #adb5bd; text-align: center; padding: 20px; margin-top: 40px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="nav-menu">
+        <a href="index.html" class="btn-dashboard">Dashboard</a>
+        <a href="use_case.html" class="btn-usecase">1. Presentasi Use Case</a>
+        <a href="activity.html" class="btn-activity">2. Presentasi Activity</a>
+        <a href="sequence.html" class="btn-sequence">3. Presentasi Sequence</a>
+        <a href="flowchart.html" class="btn-flowchart">4. Presentasi Flowchart</a>
+    </div>
+
+    <div class="container">
+        <div class="slide">
+            <span class="badge">Activity 01</span>
+            <h2>Login & Validasi Status SIAKAD</h2>
+            <img src="activity/1_login & autentifikasi.png" alt="Activity Login">
+            <p>Proses autentikasi dimulai ketika pengguna (penumpang atau sopir) membuka layar aplikasi, memasukkan kredensial berupa NIM atau Email beserta kata sandi, dan menekan tombol masuk. Sistem SJ Shuttle kemudian menerima dan mengenkripsi data tersebut untuk dilakukan cross-check ke database internal. Apabila kredensial tidak valid, sistem secara otomatis menolak akses dan menampilkan pesan error. Namun, jika kredensial valid, sistem akan memanggil API SIAKAD; jika merespons, sistem akan mengunduh meta-data status mahasiswa, menerbitkan Token Akses, dan mengarahkan pengguna ke halaman Dashboard. Jika API SIAKAD sedang bermasalah, sistem akan menampilkan notifikasi kegagalan sinkronisasi.</p>
+        </div>
+
+        <div class="slide">
+            <span class="badge">Activity 02</span>
+            <h2>Top-Up E-Wallet (Integrasi Midtrans)</h2>
+            <img src="activity/2_top-up e-wallet.png" alt="Activity Top Up">
+            <p>Alur pengisian saldo diawali oleh penumpang yang membuka menu dompet digital, memasukkan nominal top-up (minimal Rp 10.000), dan menekan tombol isi saldo. Sistem memvalidasi nominal tersebut lalu mengirimkan request ke server Midtrans, yang kemudian mengembalikan Snap Token untuk memunculkan jendela pembayaran. Penumpang dapat membatalkan proses atau melanjutkannya dengan menyelesaikan transfer. Midtrans mengecek kesesuaian nominal transfer; jika sesuai, Midtrans mengirimkan Webhook berstatus Settlement ke sistem SJ Shuttle. Sistem memverifikasi keaslian signature, menyuntikkan nominal ke saldo wallet, menerbitkan log kredit, dan diakhiri dengan pengiriman push notification.</p>
+        </div>
+
+        <div class="slide">
+            <span class="badge">Activity 03</span>
+            <h2>Generate Dynamic QR Token</h2>
+            <img src="activity/3_generate QR token.png" alt="Activity Generate QR">
+            <p>Penumpang menekan tombol "Bayar Tiket", memicu sistem untuk mengecek status akademik mahasiswa. Bagi mahasiswa reguler, sistem mengecek saldo berjalan; jika di bawah Rp 7.500, proses diblokir dan muncul peringatan. Bagi mahasiswa kelas karyawan (CK/CS), pengecekan limit saldo ini diabaikan. Sistem selanjutnya mengkalkulasi UUID acak, menetapkan kedaluwarsa 5 menit, dan merender QR Code berbingkai Emas atau Abu-abu di layar ponsel. Jika batas waktu habis sebelum dipindai, sistem secara otomatis menghanguskan QR lama dan me-refresh layar.</p>
+        </div>
+
+        <div class="slide">
+            <span class="badge">Activity 04</span>
+            <h2>Pemindaian Tiket & Geo-Validation</h2>
+            <img src="activity/4_pindai tiket.png" alt="Activity Pemindaian">
+            <p>Pengemudi mengarahkan kamera untuk memindai QR Token milik penumpang. Sistem mengekstraksi UUID dan mengecek limit sisa kursi; jika penuh, transaksi ditolak. Jika kursi tersedia, sistem mengambil koordinat GPS absolut dari kedua perangkat untuk dikalkulasi jarak trigonometrinya (Haversine). Jika jarak terpaut lebih dari 15 meter, sistem menolak transaksi (Indikasi Fake GPS). Sebaliknya, jika jarak valid, sistem mengeksekusi Lock-For-Update pada database, memotong saldo sebesar Rp 0 atau Rp 7.500, mencatat mutasi, mengurangi kuota kursi, membunyikan suara validasi di HP pengemudi, dan mengubah layar HP penumpang menjadi warna hijau (LUNAS).</p>
+        </div>
+
+        <div class="slide">
+            <span class="badge">Activity 05</span>
+            <h2>Protokol Fallback Scanner (Darurat)</h2>
+            <img src="activity/5_protokol fallback.png" alt="Activity Fallback">
+            <p>Sebagai mitigasi jika HP penumpang mati, pengemudi menekan tombol "Mode Darurat", meminta KTM fisik, dan memindai barcode KTM atau mengetikkan NIM. Sistem mencari data mahasiswa tersebut di pangkalan data offline (Cache). Jika identitas tidak dikenali, sistem menolak input manual. Namun jika ditemukan, pengemudi mengonfirmasi masuknya penumpang, dan sistem mencatat status Pending Deduction ke dalam antrean. Sistem akan mengeksekusi sinkronisasi dan memotong saldo secara tertunda begitu HP penumpang kembali online.</p>
+        </div>
+
+        <div class="slide">
+            <span class="badge">Activity 06</span>
+            <h2>Kirim Peringatan Kedaruratan (SOS Alert)</h2>
+            <img src="activity/6_kirim alert SOS.png" alt="Activity SOS">
+            <p>Dalam kondisi krisis, pengemudi membuka panel menu SOS, mendapat peringatan konfirmasi, lalu menggeser slider darurat. Jika koneksi internet tidak stabil, payload SOS disimpan secara lokal dan sistem melakukan proses retry pemancaran bertubi-tubi hingga sinyal terkirim. Jika koneksi stabil, sistem seketika merubah status armada di database menjadi OFFLINE-DARURAT dan membekukan fungsi QR Scanner. Secara serentak, peringatan ini masuk ke Web Dashboard Dispatcher yang langsung memicu alarm audio dan memunculkan indikator merah berkedip pada peta.</p>
+        </div>
+
+        <div class="slide">
+            <span class="badge">Activity 07</span>
+            <h2>Otomatisasi Mode Hibernasi Siang</h2>
+            <img src="activity/7_hibernasi mode.png" alt="Activity Hibernasi">
+            <p>Auto-Scheduler (Cron Job) yang memantau waktu peladen mendeteksi pukul 10:00 WIB dan memicu fungsi Sleep di latar belakang. Sistem SJ Shuttle merespons dengan memutus secara paksa seluruh koneksi WebSockets pengemudi, menghentikan penerimaan transmisi GPS, dan mengubah label pelacakan menjadi "Armada Istirahat". Sistem kemudian berdiam hingga mendeteksi pukul 15:30 WIB, lalu memicu fungsi Wake-Up. Sistem membuka kembali port WebSocket, menginstruksikan pengemudi untuk kembali mengirimkan GPS, dan sistem dinyatakan siap melayani antrean boarding sore.</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        &copy; 2026 SJ Shuttle (TelePort UNPAM) - Misbachuddin. All Rights Reserved.
+    </div>
+
+</body>
+</html>

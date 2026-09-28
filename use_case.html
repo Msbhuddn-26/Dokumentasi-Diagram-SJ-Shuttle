@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Use Case - SJ Shuttle</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 0; }
+        .nav-menu { background: #343a40; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .nav-menu a { color: #fff; text-decoration: none; padding: 10px 15px; margin: 5px; border-radius: 5px; font-weight: bold; transition: background 0.3s; display: inline-block; }
+        .nav-menu a.btn-dashboard { background: #6c757d; }
+        .nav-menu a.btn-usecase { background: #fd7e14; }
+        .nav-menu a.btn-activity { background: #17a2b8; }
+        .nav-menu a.btn-sequence { background: #28a745; }
+        .nav-menu a.btn-flowchart { background: #6f42c1; }
+        .nav-menu a:hover { opacity: 0.8; }
+        .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        .slide { background: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 30px; margin-bottom: 30px; border-left: 5px solid #fd7e14; }
+        .slide h2 { color: #fd7e14; margin-top: 0; border-bottom: 2px solid #e9ecef; padding-bottom: 10px; }
+        .slide img { max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 15px; background: #fff; }
+        .badge { display: inline-block; background: #ffc107; color: #000; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: left; vertical-align: top; }
+        th { background-color: #f8f9fa; }
+        .footer { background: #343a40; color: #adb5bd; text-align: center; padding: 20px; margin-top: 40px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="nav-menu">
+        <a href="index.html" class="btn-dashboard">Dashboard</a>
+        <a href="use_case.html" class="btn-usecase">1. Presentasi Use Case</a>
+        <a href="activity.html" class="btn-activity">2. Presentasi Activity</a>
+        <a href="sequence.html" class="btn-sequence">3. Presentasi Sequence</a>
+        <a href="flowchart.html" class="btn-flowchart">4. Presentasi Flowchart</a>
+    </div>
+
+    <div class="container">
+        
+        <div class="slide">
+            <span class="badge">Arsitektur Visual</span>
+            <h2>Blueprint Use Case Diagram</h2>
+            <img src="use_case.png" alt="Use Case Diagram v1">
+            <p>Diagram di atas mengilustrasikan batasan sistem (System Boundary) dari aplikasi SJ Shuttle yang terbagi ke dalam 5 modul utama. Setiap aktor memiliki porsi hak akses yang diatur secara ketat, dengan beberapa interaksi me-trigger API pihak ketiga (SIAKAD & Payment Gateway).</p>
+        </div>
+
+        <div class="slide">
+            <span class="badge">UC-01</span>
+            <h2>Login & Validasi Status Akademik</h2>
+            <p>Pengguna masuk ke dalam aplikasi menggunakan kredensial Single Sign-On (SSO). Sistem SJ Shuttle akan secara otomatis memanggil API SIAKAD untuk memverifikasi identitas dan menentukan apakah pengguna adalah mahasiswa Reguler atau Kelas Karyawan (CK/CS) guna penyesuaian tarif tiket nantinya.</p>
+            <table>
+                <tr><th colspan="2">Skenario Utama (Kondisi: Layar otentikasi terbuka)</th></tr>
+                <tr><td width="50%"><b>Aksi Aktor:</b> Memasukkan kredensial lalu menekan "Masuk".</td><td><b>Reaksi Sistem:</b> Menerima & mengenkripsi data, cross-check ke API SIAKAD, mengunduh meta-data status mahasiswa, menerbitkan Token Sanctum, dan mengarahkan ke Dashboard.</td></tr>
+                <tr><th colspan="2">Skenario Alternatif</th></tr>
+                <tr><td colspan="2"><b>Alt 1:</b> Kredensial tidak valid &rarr; Sistem menolak akses dengan error "Kredensial tidak sesuai".<br><b>Alt 2:</b> API SIAKAD down &rarr; Sistem menampilkan notifikasi gagal menyinkronkan data.</td></tr>
+            </table>
+        </div>
+
+        <div class="slide">
+            <span class="badge">UC-02</span>
+            <h2>Pengisian Saldo Dompet Digital (Top-Up)</h2>
+            <p>Penumpang memasukkan nominal pengisian saldo untuk e-wallet mereka. Sistem kemudian memanggil layanan Payment Gateway Midtrans Snap untuk menampilkan antarmuka pembayaran. Setelah penumpang menyelesaikan pembayaran via m-banking, peladen Midtrans akan mengirimkan Webhook ke server SJ Shuttle untuk menambah saldo secara instan.</p>
+            <table>
+                <tr><th colspan="2">Skenario Utama (Kondisi: Penumpang berada di menu Keuangan/Dompet)</th></tr>
+                <tr><td width="50%"><b>Aksi Aktor:</b> Memasukkan nominal (min. Rp10.000), menekan "Isi Saldo", lalu menyelesaikan transfer di pop-up Midtrans.</td><td><b>Reaksi Sistem:</b> Memvalidasi request, memunculkan jendela Snap, menerima Webhook "Settlement", memverifikasi signature, menyuntikkan nominal ke wallet, dan mengirim notifikasi.</td></tr>
+                <tr><th colspan="2">Skenario Alternatif</th></tr>
+                <tr><td colspan="2"><b>Alt 1:</b> Penumpang membatalkan pembayaran di pop-up &rarr; Mengubah status transaksi menjadi Canceled.<br><b>Alt 2:</b> Transfer tidak sesuai &rarr; Status ditahan (Pending) hingga nominal sesuai.</td></tr>
+            </table>
+        </div>
+
+        <div class="slide">
+            <span class="badge">UC-03</span>
+            <h2>Generate Dynamic QR Token</h2>
+            <p>Sistem menciptakan kode matriks QR dinamis yang memuat UUID terenkripsi. Tampilan visual bingkai QR akan dibedakan menjadi warna Emas untuk mahasiswa Kelas Karyawan (CK/CS) dan Abu-abu untuk mahasiswa Reguler. Hal ini berfungsi sebagai penanda prioritas visual bagi pengemudi saat penumpang hendak naik bus.</p>
+            <table>
+                <tr><th colspan="2">Skenario Utama (Kondisi: Penumpang memunculkan menu Bayar Tiket)</th></tr>
+                <tr><td width="50%"><b>Aksi Aktor:</b> Menekan tombol "Bayar Tiket" (Generate QR).</td><td><b>Reaksi Sistem:</b> Mengecek saldo & status akademik, menghasilkan QR berbatas waktu (5 menit), dan merender QR di layar ponsel sesuai warna tier mahasiswa.</td></tr>
+                <tr><th colspan="2">Skenario Alternatif</th></tr>
+                <tr><td colspan="2"><b>Alt 1:</b> Saldo Reguler kurang dari Rp 7.500 &rarr; Pembuatan QR diblokir, muncul peringatan "Saldo Kurang".<br><b>Alt 2:</b> Batas waktu 5 menit habis &rarr; Layar di-refresh dan QR lama dihanguskan untuk mencegah penipuan.</td></tr>
+            </table>
+        </div>
+
+        <div class="slide">
+            <span class="badge">UC-04</span>
+            <h2>Pemindaian Tiket & Geo-Validation</h2>
+            <p>Pengemudi memindai QR penumpang di pintu bus. Server langsung mengomputasi jarak koordinat perangkat pengemudi dan penumpang menggunakan algoritma Haversine. Apabila jarak keduanya divalidasi kurang dari 15 meter, sistem akan mengeksekusi pemotongan saldo secara cashless.</p>
+            <table>
+                <tr><th colspan="2">Skenario Utama (Kondisi: Penumpang menunjukkan QR Token)</th></tr>
+                <tr><td width="50%"><b>Aksi Aktor:</b> Pengemudi mengarahkan lensa kamera scanner ke HP penumpang.</td><td><b>Reaksi Sistem:</b> Ekstrak UUID, komputasi jarak GPS, eksekusi pemotongan Rp 0 (CK/CS) atau Rp 7.500 (Reguler), kurangi sisa kursi bus, dan ubah layar penumpang menjadi warna Hijau (LUNAS).</td></tr>
+                <tr><th colspan="2">Skenario Alternatif</th></tr>
+                <tr><td colspan="2"><b>Alt 1:</b> Jarak lebih dari 15 Meter (Indikasi Fake GPS) &rarr; Transaksi ditolak, layar menjadi Merah.<br><b>Alt 2:</b> Kapasitas 47 Seat penuh &rarr; Transaksi dihentikan, peringatan "Armada Penuh".</td></tr>
+            </table>
+        </div>
+
+        <div class="slide">
+            <span class="badge">UC-05</span>
+            <h2>Protokol Fallback Scanner (Darurat)</h2>
+            <p>Fitur penunjang ini digunakan oleh pengemudi sebagai mitigasi apabila gawai (HP) milik penumpang mati total atau berada di area blank spot sinyal sehingga tidak dapat membuat QR dinamis. Fitur ini memastikan kelancaran antrean penumpang agar tidak tersendat.</p>
+            <table>
+                <tr><th colspan="2">Skenario Utama (Kondisi: Mahasiswa melapor HP mati)</th></tr>
+                <tr><td width="50%"><b>Aksi Aktor:</b> Meminta KTM, menekan tombol "Mode Darurat", dan memindai barcode KTM / input manual NIM.</td><td><b>Reaksi Sistem:</b> Mencari data mahasiswa di cache offline, mencatat status Pending Deduction, dan memotong saldo otomatis saat HP penumpang kembali online.</td></tr>
+                <tr><th colspan="2">Skenario Alternatif</th></tr>
+                <tr><td colspan="2"><b>Alt 1:</b> NIM tidak terdaftar &rarr; Sistem menampilkan peringatan "Akses Ditolak: Identitas Tidak Dikenali".</td></tr>
+            </table>
+        </div>
+
+        <div class="slide">
+            <span class="badge">UC-06</span>
+            <h2>Kirim Peringatan Kedaruratan (SOS Alert)</h2>
+            <p>Jika armada mengalami kerusakan teknis atau kecelakaan, sopir dapat menekan tombol panik (SOS). Sistem akan langsung membekukan fungsi transaksi tiket pada bus tersebut untuk mencegah penumpang baru naik, dan secara simultan mengirimkan peringatan beserta koordinat lokasi ke Dasbor Pusat Administrator.</p>
+            <table>
+                <tr><th colspan="2">Skenario Utama (Kondisi: Armada butuh evakuasi/bantuan)</th></tr>
+                <tr><td width="50%"><b>Aksi Aktor:</b> Membuka panel SOS, konfirmasi, dan menggeser Slider Darurat.</td><td><b>Reaksi Sistem:</b> Merubah status armada menjadi OFFLINE-DARURAT, membekukan QR Scanner, memicu alarm audio dan indikator merah di Web Dashboard Admin.</td></tr>
+                <tr><th colspan="2">Skenario Alternatif</th></tr>
+                <tr><td colspan="2"><b>Alt 1:</b> Sinyal pengemudi putus &rarr; Log darurat disimpan lokal dan sistem melakukan retry pemancaran bertubi-tubi hingga sinyal didapat.</td></tr>
+            </table>
+        </div>
+
+        <div class="slide">
+            <span class="badge">UC-07</span>
+            <h2>Otomatisasi Mode Hibernasi Server</h2>
+            <p>Sistem dirancang untuk memangkas biaya komputasi peladen cloud. Mengingat bus SJ Shuttle tidak beroperasi pada siang hari, sistem Cron Job (Auto-Scheduler) akan menidurkan penerimaan koneksi GPS secara otomatis dan membangunkan peladen kembali pada jam sibuk sore hari.</p>
+            <table>
+                <tr><th colspan="2">Skenario Utama (Kondisi: Waktu menunjukan jam kosong)</th></tr>
+                <tr><td width="50%"><b>Aksi Aktor (Sistem):</b> Memicu scheduler di pukul 10:00 WIB dan menunggu hingga pukul 15:30 WIB.</td><td><b>Reaksi Sistem:</b> Jam 10:00 memutus WebSocket pengemudi, mengubah status peta menjadi "Istirahat". Jam 15:30 mengaktifkan kembali (wakeup) WebSocket untuk persiapan shift sore.</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="footer">
+        &copy; 2026 SJ Shuttle (TelePort UNPAM) - Misbachuddin. All Rights Reserved.
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flowchart Diagram - SJ Shuttle</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 0; }
+        .nav-menu { background: #343a40; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .nav-menu a { color: #fff; text-decoration: none; padding: 10px 15px; margin: 5px; border-radius: 5px; font-weight: bold; transition: background 0.3s; display: inline-block; }
+        .nav-menu a.btn-dashboard { background: #6c757d; }
+        .nav-menu a.btn-usecase { background: #fd7e14; }
+        .nav-menu a.btn-activity { background: #17a2b8; }
+        .nav-menu a.btn-sequence { background: #28a745; }
+        .nav-menu a.btn-flowchart { background: #6f42c1; }
+        .nav-menu a:hover { opacity: 0.8; }
+        .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        .slide { background: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 30px; margin-bottom: 30px; border-left: 5px solid #6f42c1; text-align: center; }
+        .slide h2 { color: #6f42c1; margin-top: 0; border-bottom: 2px solid #e9ecef; padding-bottom: 10px; text-align: left; }
+        .slide img { max-width: 100%; height: auto; border-radius: 4px; margin-bottom: 15px; }
+        .slide p { font-size: 16px; text-align: justify; line-height: 1.6; }
+        .badge { display: inline-block; background: #6f42c1; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; margin-bottom: 10px; float: left; }
+        .footer { background: #343a40; color: #adb5bd; text-align: center; padding: 20px; margin-top: 40px; font-size: 14px; }
+        .clear { clear: both; }
+    </style>
+</head>
+<body>
+
+    <div class="nav-menu">
+        <a href="index.html" class="btn-dashboard">Dashboard</a>
+        <a href="use_case.html" class="btn-usecase">1. Presentasi Use Case</a>
+        <a href="activity.html" class="btn-activity">2. Presentasi Activity</a>
+        <a href="sequence.html" class="btn-sequence">3. Presentasi Sequence</a>
+        <a href="flowchart.html" class="btn-flowchart">4. Presentasi Flowchart</a>
+    </div>
+
+    <div class="container">
+        <div class="slide">
+            <span class="badge">Flowchart 01</span>
+            <div class="clear"></div>
+            <h2>Algoritma Geo-Validation (Boarding)</h2>
+            <img src="flowchart/1_Algoritma Geo-Validation & Auto-Deduction.png" alt="Flowchart Geo-Validation">
+            <p>Alur komputasi dimulai saat sistem mengekstraksi UUID dari QR Token. Sistem pertama-tama memverifikasi kapasitas kursi; jika penuh, transaksi ditolak. Jika tersedia, sistem mengalkulasi jarak antara koordinat GPS pengemudi dan penumpang menggunakan algoritma Haversine. Jika jarak spasial lebih dari 15 meter, transaksi ditolak sebagai indikasi Fake GPS. Apabila valid, sistem menarik meta-data mahasiswa: membebaskan tagihan (Rp 0) untuk kelas karyawan, atau mengecek kecukupan saldo untuk reguler. Logika berujung pada eksekusi Lock-For-Update di pangkalan data untuk memotong saldo, mencatat mutasi, memperbarui tiket, mengurangi sisa kursi, dan memancarkan sinyal ke ponsel penumpang.</p>
+        </div>
+
+        <div class="slide">
+            <span class="badge">Flowchart 02</span>
+            <div class="clear"></div>
+            <h2>Algoritma Webhook Midtrans</h2>
+            <img src="flowchart/2_Algoritma Webhook Payment Gateway.png" alt="Flowchart Webhook">
+            <p>Sistem otonom ini bereaksi ketika menerima HTTP POST Webhook dari server Midtrans. Peladen akan mengekstraksi Order ID dan mengkalkulasi Hash Signature untuk memvalidasi keaslian permintaan. Jika tidak valid, sistem mengabaikan permintaan (HTTP 403 Forbidden). Jika valid, data ditarik dari pangkalan data; apabila transaksi sudah berstatus SUCCESS sebelumnya, sistem mendeteksinya sebagai webhook duplikat. Jika belum selesai, sistem membedah parameter transaction_status. Status settlement atau capture akan memicu pembaruan transaksi menjadi SUCCESS dan penambahan saldo penumpang. Status cancel atau expire akan membatalkan transaksi.</p>
+        </div>
+
+        <div class="slide">
+            <span class="badge">Flowchart 03</span>
+            <div class="clear"></div>
+            <h2>Algoritma Mitigasi Darurat SOS</h2>
+            <img src="flowchart/3_Algoritma Mitigasi SOS.png" alt="Flowchart SOS">
+            <p>Algoritma kedaruratan ini dipicu saat peladen menerima sinyal SOS dari perangkat pengemudi. Sistem mengekstraksi ID Armada, lalu memodifikasi tabel armada dengan mengubah statusnya menjadi OFFLINE_EMERGENCY. Untuk membekukan proses boarding, sistem mengeset sisa kursi pada armada tersebut menjadi 0. Sistem kemudian memeriksa antrean transaksi; jika terdapat tiket yang masih menggantung (pending), sistem otomatis membatalkannya dan mengeksekusi refund pengembalian saldo. Terakhir, sistem membentuk payload notifikasi untuk dikirimkan melalui WebSockets, yang menyalakan alarm audio dan visual pada Dasbor Admin.</p>
+        </div>
+
+        <div class="slide">
+            <span class="badge">Flowchart 04</span>
+            <div class="clear"></div>
+            <h2>Algoritma Auto-Scheduler</h2>
+            <img src="flowchart/4_Algoritma Auto-Scheduler.png" alt="Flowchart Scheduler">
+            <p>Logika otomatisasi ini berjalan konstan dengan mengecek waktu server setiap detak menit. Jika waktu menunjukkan tepat pukul 10:00 WIB, algoritma memicu Mode Hibernasi: memutus paksa koneksi WebSockets pengemudi, menghentikan listener GPS, dan mengubah status peta penumpang menjadi "Armada Istirahat". Jika waktu menunjukkan pukul 15:30 WIB, algoritma memicu Mode Aktif (Wake Up): membuka kembali port listener WebSockets, menembakkan sinyal ping ke aplikasi pengemudi, dan mengembalikan status peta menjadi "Tracking Aktif". Jika waktu belum menyentuh kedua jadwal tersebut, sistem mengabaikan pengecekan.</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        &copy; 2026 SJ Shuttle (TelePort UNPAM) - Misbachuddin. All Rights Reserved.
+    </div>
+
+</body>
+</html>
